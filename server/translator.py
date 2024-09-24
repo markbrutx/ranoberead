@@ -6,9 +6,9 @@ from openai import AsyncOpenAI
 
 # Настройки
 RANOBE_ID = 1
-START_CHAPTER = 336
-NUM_CHAPTERS = 31
-API_URL = "http://localhost:5000/chapters"
+START_CHAPTER = 367
+NUM_CHAPTERS = 4
+API_URL = "http://192.168.0.165:3000/chapters"
 OPENAI_API_KEY = "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"
 MAX_TOKENS = 4096
 RETRY_DELAY = 15  # seconds
@@ -57,7 +57,7 @@ def split_content(content, max_tokens=MAX_TOKENS):
 async def translate_part(part, part_number, total_parts):
     """Перевод части содержания с использованием GPT-4o через асинхронный клиент OpenAI"""
     prompt = (
-        "переведи на русский и пожалуйста сохраняй стиль нормального повествования "
+        "переведи на русский и пожалуйста сохраняй стиль нормального повествования и пунктуацию\n\n"
         "а не делай тупой машинный перевод\n\nесли че там босс Пэй именно\n\n" + part
     )
 
@@ -69,7 +69,7 @@ async def translate_part(part, part_number, total_parts):
             completion = await client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "Вы - профессиональный переводчик с английского на русский."},
+                    {"role": "system", "content": "Вы - профессиональный переводчик с английского на русский который умеет по смыслу адаптировать текст в читабельном виде."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
@@ -114,7 +114,7 @@ async def translate_title(title):
         completion = await client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Вы - профессиональный переводчик с английского на русский."},
+                {"role": "system", "content": "Вы - профессиональный переводчик с английского на русский который умеет по смыслу адаптировать текст в читабельном виде."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,

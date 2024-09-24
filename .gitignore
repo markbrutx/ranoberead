@@ -45,7 +45,6 @@ Thumbs.db
 
 # Database
 *.sqlite
-*.db
 
 # Logs
 logs

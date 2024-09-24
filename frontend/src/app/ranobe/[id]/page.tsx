@@ -21,7 +21,7 @@ interface RanobeDetails {
 }
 
 async function getRanobeDetails(id: string): Promise<RanobeDetails> {
-  const res = await fetch(`http://localhost:5000/ranobe/${id}`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ranobe/${id}`);
   if (!res.ok) {
     throw new Error('Failed to fetch ranobe details');
   }

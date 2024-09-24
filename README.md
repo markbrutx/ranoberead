@@ -119,3 +119,6 @@ npm run dev
 ## Лицензия
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
+lt --port 3000
+lt --port 5000

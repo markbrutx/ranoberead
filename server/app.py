@@ -6,8 +6,7 @@ from flask_migrate import Migrate
 from sqlalchemy import func
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": ["Content-Type"]}}, support_credentials=True)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ranobe.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -32,6 +31,17 @@ class Chapter(db.Model):
     title_en = db.Column(db.String(200))
     content_ru = db.Column(db.Text)
     content_en = db.Column(db.Text)
+
+class Bookmark(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ranobe_id = db.Column(db.Integer, db.ForeignKey('ranobe.id'), nullable=False)
+    chapter_id = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+    ranobe = db.relationship('Ranobe', backref=db.backref('bookmarks', lazy=True))
+
+    __table_args__ = (db.UniqueConstraint('ranobe_id', name='uix_1'),)
 
 # Создание таблиц
 with app.app_context():
@@ -82,9 +92,19 @@ ranobe_detail_model = api.model('RanobeDetail', {
     'chapters': fields.List(fields.Nested(chapter_summary_model), description='List of chapters')
 })
 
+bookmark_model = api.model('Bookmark', {
+    'id': fields.Integer(readonly=True, description='The bookmark unique identifier'),
+    'ranobe_id': fields.Integer(required=True, description='The ranobe ID'),
+    'chapter_id': fields.Integer(required=True, description='The chapter ID'),
+    'ranobe_title': fields.String(description='The ranobe title'),
+    'chapter_title_ru': fields.String(description='The chapter title in Russian'),
+    'chapter_number_origin': fields.Integer(description='The original chapter number')
+})
+
 # Неймспейсы
 ns_ranobe = api.namespace('ranobe', description='Ranobe operations')
 ns_chapters = api.namespace('chapters', description='Chapter operations')
+ns_bookmarks = api.namespace('bookmarks', description='Bookmark operations')
 
 # Ranobe endpoints
 @ns_ranobe.route('/')
@@ -244,5 +264,79 @@ class ChapterTranslationUpdate(Resource):
         db.session.commit()
         return chapter
 
+@ns_bookmarks.route('/')
+class BookmarkList(Resource):
+    @ns_bookmarks.doc('list_bookmarks')
+    @ns_bookmarks.marshal_list_with(bookmark_model)
+    def get(self):
+        '''List all bookmarks'''
+        bookmarks = db.session.query(
+            Bookmark,
+            Ranobe.title.label('ranobe_title'),
+            Chapter.title_ru.label('chapter_title_ru'),
+            Chapter.chapter_number_origin
+        ).join(Ranobe, Bookmark.ranobe_id == Ranobe.id)\
+         .join(Chapter, (Chapter.ranobe_id == Bookmark.ranobe_id) & 
+                        (Chapter.chapter_id == Bookmark.chapter_id))\
+         .all()
+
+        return [{
+            'id': bookmark.Bookmark.id,
+            'ranobe_id': bookmark.Bookmark.ranobe_id,
+            'chapter_id': bookmark.Bookmark.chapter_id,
+            'ranobe_title': bookmark.ranobe_title,
+            'chapter_title_ru': bookmark.chapter_title_ru,
+            'chapter_number_origin': bookmark.chapter_number_origin
+        } for bookmark in bookmarks]
+
+    @ns_bookmarks.doc('create_or_update_bookmark')
+    @ns_bookmarks.expect(api.model('BookmarkCreate', {
+        'ranobe_id': fields.Integer(required=True, description='The ranobe ID'),
+        'chapter_id': fields.Integer(required=True, description='The chapter ID')
+    }))
+    @ns_bookmarks.marshal_with(bookmark_model, code=201)
+    def post(self):
+        '''Create a new bookmark or update existing one for the ranobe'''
+        data = api.payload
+        
+        # Check if a bookmark for this ranobe already exists
+        existing_bookmark = Bookmark.query.filter_by(ranobe_id=data['ranobe_id']).first()
+        
+        if existing_bookmark:
+            # Update existing bookmark
+            existing_bookmark.chapter_id = data['chapter_id']
+            db.session.commit()
+            bookmark = existing_bookmark
+        else:
+            # Create new bookmark
+            new_bookmark = Bookmark(ranobe_id=data['ranobe_id'], chapter_id=data['chapter_id'])
+            db.session.add(new_bookmark)
+            db.session.commit()
+            bookmark = new_bookmark
+        
+        # Fetch additional data for response
+        bookmark_data = db.session.query(
+            Bookmark,
+            Ranobe.title.label('ranobe_title'),
+            Chapter.title_ru.label('chapter_title_ru'),
+            Chapter.chapter_number_origin
+        ).join(Ranobe, Bookmark.ranobe_id == Ranobe.id)\
+         .join(Chapter, (Chapter.ranobe_id == Bookmark.ranobe_id) & 
+                        (Chapter.chapter_id == Bookmark.chapter_id))\
+         .filter(Bookmark.id == bookmark.id).first()
+
+        return {
+            'id': bookmark_data.Bookmark.id,
+            'ranobe_id': bookmark_data.Bookmark.ranobe_id,
+            'chapter_id': bookmark_data.Bookmark.chapter_id,
+            'ranobe_title': bookmark_data.ranobe_title,
+            'chapter_title_ru': bookmark_data.chapter_title_ru,
+            'chapter_number_origin': bookmark_data.chapter_number_origin
+        }, 201
+        
+@app.route('/bookmarks', methods=['OPTIONS'])
+def options():
+    return '', 204
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)

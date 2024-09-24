@@ -20,15 +20,27 @@ async function getChapterContent(
   chapterId: string
 ): Promise<Chapter> {
   const res = await fetch(
-    `http://localhost:5000/chapters/${ranobeId}/${chapterId}?lang=ru`,
-    {
-      headers: {
-        accept: 'application/json'
-      }
-    }
+    `${process.env.NEXT_PUBLIC_API_URL}/chapters/${ranobeId}/${chapterId}?lang=ru`
   );
   if (!res.ok) {
     throw new Error('Failed to fetch chapter content');
+  }
+  return res.json();
+}
+
+async function createBookmark(ranobeId: string, chapterId: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bookmarks`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json' // Указываем правильный Content-Type
+    },
+    body: JSON.stringify({
+      ranobe_id: parseInt(ranobeId),
+      chapter_id: parseInt(chapterId)
+    })
+  });
+  if (!res.ok) {
+    throw new Error('Failed to create bookmark');
   }
   return res.json();
 }
@@ -50,6 +62,8 @@ export default function ChapterPage({
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [bookmarkStatus, setBookmarkStatus] = useState<string | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -68,12 +82,33 @@ export default function ChapterPage({
 
   const handlers = useSwipeable({
     onSwipedLeft: () => {
-      // Navigate to next chapter (you'll need to implement this)
+      // Navigate to next chapter
+      if (chapter) {
+        window.location.href = `/ranobe/${params.id}/chapter/${
+          chapter.chapter_id + 1
+        }`;
+      }
     },
     onSwipedRight: () => {
-      // Navigate to previous chapter (you'll need to implement this)
+      // Navigate to previous chapter
+      if (chapter) {
+        window.location.href = `/ranobe/${params.id}/chapter/${
+          chapter.chapter_id - 1
+        }`;
+      }
     }
   });
+
+  const handleCreateBookmark = async () => {
+    try {
+      await createBookmark(params.id, params.chapterNumber);
+      setBookmarkStatus('Bookmark created successfully!');
+      setTimeout(() => setBookmarkStatus(null), 3000);
+    } catch (err) {
+      setBookmarkStatus('Failed to create bookmark. Please try again.');
+      setTimeout(() => setBookmarkStatus(null), 3000);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -103,7 +138,13 @@ export default function ChapterPage({
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4" {...handlers}>
-      <header className="mb-8">
+      <header className="mb-8 relative">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="absolute top-0 right-0 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Menu
+        </button>
         <h1 className="text-2xl font-bold mb-4">
           {chapter.chapter_number_origin} - {chapter.title_ru || 'Без названия'}
         </h1>
@@ -113,6 +154,27 @@ export default function ChapterPage({
         >
           Back to Chapters
         </Link>
+        {isMenuOpen && (
+          <div className="absolute top-12 right-0 bg-gray-800 p-4 rounded-lg shadow-lg">
+            <button
+              onClick={handleCreateBookmark}
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2"
+            >
+              Create Bookmark
+            </button>
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full"
+            >
+              Close Menu
+            </button>
+          </div>
+        )}
+        {bookmarkStatus && (
+          <div className="mt-4 p-2 bg-blue-500 text-white rounded">
+            {bookmarkStatus}
+          </div>
+        )}
       </header>
       <article className="max-w-prose mx-auto">
         <div className="mt-4 leading-relaxed text-gray-200 text-lg">
