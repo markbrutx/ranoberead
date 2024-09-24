@@ -1,74 +1,88 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import re
 
-# Настройки парсера
+# Parser settings
 BASE_URL = "https://wtr-lab.com/en/serie-619/losing-money-to-be-a-tycoon/chapter-{}"
-START_CHAPTER = 337
-NUM_CHAPTERS = 5
-RANOBE_ID = 1  # ID существующего ранобэ в базе данных
+START_CHAPTER = 341
+NUM_CHAPTERS = 30
+RANOBE_ID = 1  # ID of the existing ranobe in the database
 
-# URL вашего API для создания новой главы
-API_URL = "http://localhost:5000/chapters"  # Измените на актуальный URL вашего API
+# URL of your API for creating a new chapter
+API_URL = "http://localhost:5000/chapters/"  # Updated to match your Flask API endpoint
 
-def fetch_chapter_content(chapter_number):
-    url = BASE_URL.format(chapter_number)
+def fetch_chapter_content(chapter_number_origin):
+    url = BASE_URL.format(chapter_number_origin)
     response = requests.get(url)
     if response.status_code != 200:
-        print(f"Failed to fetch chapter {chapter_number}")
+        print(f"Failed to fetch chapter {chapter_number_origin}")
         return None
     
     soup = BeautifulSoup(response.text, 'html.parser')
     
-    # Ищем скрипт с данными JSON
     script_tag = soup.find('script', id='__NEXT_DATA__')
     if not script_tag:
-        print(f"Could not find JSON data for chapter {chapter_number}")
+        print(f"Could not find JSON data for chapter {chapter_number_origin}")
         return None
     
-    # Извлекаем и парсим JSON
     json_data = json.loads(script_tag.string)
     
-    # Пытаемся найти содержимое главы в структуре JSON
     try:
-        chapter_data = json_data['props']['pageProps']['serie']['chapter']['title']
-        content = f"Chapter title: {chapter_data}\n\n"
+        full_title = json_data['props']['pageProps']['serie']['chapter_data']['data']['title']
         
+        chapter_id_match = re.match(r'Chapter (\d+)', full_title)
+        if not chapter_id_match:
+            print(f"Could not extract chapter ID from title: {full_title}")
+            return None
+        
+        chapter_id = int(chapter_id_match.group(1))
+        title_en = full_title.replace(f"Chapter {chapter_id}", "").strip()
+
         chapter_body = json_data['props']['pageProps']['serie']['chapter_data']['data']['body']
-        content += '\n'.join(chapter_body)
+        content_en = '\n'.join(chapter_body)
+        
+        return {
+            'chapter_id': chapter_id,
+            'chapter_number_origin': chapter_number_origin,
+            'title_en': title_en,
+            'content_en': content_en
+        }
     except KeyError as e:
         print(f"Error extracting chapter content: {e}")
         print("JSON structure:")
         print(json.dumps(json_data, indent=2))
         return None
-    
-    return content
 
-def save_chapter_to_api(chapter_number, content):
-    print(f"Saving chapter {content} to API...")
+def save_chapter_to_api(chapter_data):
+    print(f"Saving chapter {chapter_data['chapter_number_origin']} to API...")
+    
     data = {
         "ranobe_id": RANOBE_ID,
-        "chapter_number": chapter_number,
-        "content_ru": "",
-        "content_en": content,
-        "content_cn": ""
+        "chapter_id": chapter_data['chapter_id'],
+        "chapter_number_origin": chapter_data['chapter_number_origin'],
+        "title_en": chapter_data['title_en'],
+        "content_en": chapter_data['content_en']
     }
     
-    response = requests.post(API_URL, json=data)
-    
-    if response.status_code == 201:
-        print(f"Successfully saved chapter {chapter_number}")
-    else:
-        print(f"Failed to save chapter {chapter_number}. Status code: {response.status_code}")
-        print(f"Response: {response.text}")
+    try:
+        response = requests.post(API_URL, json=data)
+        
+        if response.status_code == 201:
+            print(f"Successfully saved/updated chapter {chapter_data['chapter_number_origin']}")
+        else:
+            print(f"Failed to save/update chapter {chapter_data['chapter_number_origin']}. Status code: {response.status_code}")
+            print(f"Response: {response.text}")
+    except requests.RequestException as e:
+        print(f"Error occurred while saving chapter {chapter_data['chapter_number_origin']}: {e}")
 
 def main():
     for i in range(NUM_CHAPTERS):
-        chapter_number = START_CHAPTER + i
-        print(f"Fetching chapter {chapter_number}...")
-        content = fetch_chapter_content(chapter_number)
-        if content:
-            save_chapter_to_api(chapter_number, content)
+        chapter_number_origin = START_CHAPTER + i
+        print(f"Fetching chapter {chapter_number_origin}...")
+        chapter_data = fetch_chapter_content(chapter_number_origin)
+        if chapter_data:
+            save_chapter_to_api(chapter_data)
         print("------------------------")
 
 if __name__ == "__main__":

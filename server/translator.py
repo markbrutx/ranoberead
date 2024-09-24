@@ -6,8 +6,8 @@ from openai import AsyncOpenAI
 
 # Настройки
 RANOBE_ID = 1
-START_CHAPTER = 337
-NUM_CHAPTERS = 5
+START_CHAPTER = 336
+NUM_CHAPTERS = 31
 API_URL = "http://localhost:5000/chapters"
 OPENAI_API_KEY = "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"
 MAX_TOKENS = 4096
@@ -22,12 +22,14 @@ async def get_chapter_content(ranobe_id, chapter_number):
     try:
         response = requests.get(f"{API_URL}/{ranobe_id}/{chapter_number}")
         response.raise_for_status()
-        content = response.json().get('content_en')
+        data = response.json()
+        content = data.get('content_en')
+        title = data.get('title_en')
         print(f"Successfully fetched content for chapter {chapter_number}. Length: {len(content)} characters.")
-        return content
+        return content, title
     except requests.exceptions.RequestException as e:
         print(f"Error fetching chapter {chapter_number}: {e}")
-        return None
+        return None, None
 
 def split_content(content, max_tokens=MAX_TOKENS):
     """Разделение содержания на части, не превышающие максимальное количество токенов"""
@@ -103,13 +105,39 @@ async def translate_content(content):
     print(f"Full translation completed. Total length: {len(full_translation)} characters.")
     return full_translation
 
-def update_translation(ranobe_id, chapter_number, translated_content):
+async def translate_title(title):
+    """Перевод заголовка главы на русский"""
+    prompt = f"Переведи на русский заголовок: {title}"
+    print(f"Translating title: {title}")
+    
+    try:
+        completion = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "Вы - профессиональный переводчик с английского на русский."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=100  # Небольшой лимит для перевода заголовка
+        )
+        translated_title = completion.choices[0].message.content.strip()
+        print(f"Successfully translated title. Translated title: {translated_title}")
+        return translated_title
+    except Exception as e:
+        print(f"Error translating title: {e}")
+        return None
+
+def update_translation(ranobe_id, chapter_number, translated_content, translated_title=None):
     """Обновление перевода главы на сервере"""
     print(f"Updating translation for chapter {chapter_number}...")
+    data = {"content_ru": translated_content}
+    if translated_title:
+        data["title_ru"] = translated_title
+
     try:
         response = requests.put(
             f"{API_URL}/{ranobe_id}/{chapter_number}/update_translation",
-            json={"content_ru": translated_content}
+            json=data
         )
         response.raise_for_status()
         print(f"Successfully updated translation for chapter {chapter_number}")
@@ -119,13 +147,14 @@ def update_translation(ranobe_id, chapter_number, translated_content):
 async def process_chapter(ranobe_id, chapter_number):
     """Обработка одной главы"""
     print(f"Starting to process chapter {chapter_number}...")
-    content = await get_chapter_content(ranobe_id, chapter_number)
+    content, title = await get_chapter_content(ranobe_id, chapter_number)
     if content:
         print(f"Starting translation of chapter {chapter_number}...")
         translated_content = await translate_content(content)
+        translated_title = await translate_title(title)
         if translated_content:
             print(f"Translation of chapter {chapter_number} completed. Updating on server...")
-            update_translation(ranobe_id, chapter_number, translated_content)
+            update_translation(ranobe_id, chapter_number, translated_content, translated_title)
         else:
             print(f"Failed to translate chapter {chapter_number}. Skipping update...")
     else:
