@@ -3,13 +3,16 @@ import os
 import time
 import asyncio
 from openai import AsyncOpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Настройки
 RANOBE_ID = 1
-START_CHAPTER = 367
-NUM_CHAPTERS = 4
+START_CHAPTER = 420
+NUM_CHAPTERS = 181
 API_URL = "http://192.168.0.165:3000/chapters"
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MAX_TOKENS = 4096
 RETRY_DELAY = 15  # seconds
 
@@ -69,7 +72,7 @@ async def translate_part(part, part_number, total_parts):
             completion = await client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "Вы - профессиональный переводчик с английского на русский который умеет по смыслу адаптировать текст в читабельном виде."},
+                    {"role": "system", "content": "Вы - профессиональный переводчик с английского на русский который умеет по смыслу адаптировать текст в читабельном виде и устроняет машинный перевод в угоду человекоподобному адаптивному переводу."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
