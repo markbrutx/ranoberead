@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
 interface Chapter {
@@ -54,6 +54,22 @@ function formatContent(content: string) {
   ));
 }
 
+const BookmarkIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+  </svg>
+);
+
 export default function ChapterPage({
   params
 }: {
@@ -62,8 +78,10 @@ export default function ChapterPage({
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isBookmarkVisible, setIsBookmarkVisible] = useState(true);
   const [bookmarkStatus, setBookmarkStatus] = useState<string | null>(null);
+  const lastInteractionTime = useRef(Date.now());
+  const hideTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -82,7 +100,6 @@ export default function ChapterPage({
 
   const handlers = useSwipeable({
     onSwipedLeft: () => {
-      // Navigate to next chapter
       if (chapter) {
         window.location.href = `/ranobe/${params.id}/chapter/${
           chapter.chapter_id + 1
@@ -90,25 +107,54 @@ export default function ChapterPage({
       }
     },
     onSwipedRight: () => {
-      // Navigate to previous chapter
       if (chapter) {
         window.location.href = `/ranobe/${params.id}/chapter/${
           chapter.chapter_id - 1
         }`;
       }
-    }
+    },
+    trackMouse: true
   });
 
   const handleCreateBookmark = async () => {
     try {
       await createBookmark(params.id, params.chapterNumber);
-      setBookmarkStatus('Bookmark created successfully!');
+      setBookmarkStatus('Закладка создана успешно!');
       setTimeout(() => setBookmarkStatus(null), 3000);
     } catch (err) {
-      setBookmarkStatus('Failed to create bookmark. Please try again.');
+      setBookmarkStatus('Не удалось создать закладку. Попробуйте еще раз.');
       setTimeout(() => setBookmarkStatus(null), 3000);
     }
   };
+
+  const handleInteraction = useCallback(() => {
+    lastInteractionTime.current = Date.now();
+    setIsBookmarkVisible(true);
+    if (hideTimeout.current) {
+      clearTimeout(hideTimeout.current);
+    }
+    hideTimeout.current = setTimeout(() => {
+      if (Date.now() - lastInteractionTime.current >= 3000) {
+        setIsBookmarkVisible(false);
+      }
+    }, 3000);
+  }, []);
+
+  useEffect(() => {
+    const events = ['mousemove', 'scroll', 'click', 'touchstart', 'keydown'];
+    events.forEach((event) => {
+      window.addEventListener(event, handleInteraction);
+    });
+
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, handleInteraction);
+      });
+      if (hideTimeout.current) {
+        clearTimeout(hideTimeout.current);
+      }
+    };
+  }, [handleInteraction]);
 
   if (isLoading) {
     return (
@@ -127,7 +173,7 @@ export default function ChapterPage({
             onClick={() => window.location.reload()}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
-            Retry
+            Повторить
           </button>
         </div>
       </div>
@@ -137,14 +183,11 @@ export default function ChapterPage({
   if (!chapter) return null;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4" {...handlers}>
-      <header className="mb-8 relative">
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="absolute top-0 right-0 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Menu
-        </button>
+    <div
+      className="min-h-screen bg-gray-900 text-white p-4 relative"
+      {...handlers}
+    >
+      <header className="mb-8">
         <h1 className="text-2xl font-bold mb-4">
           {chapter.chapter_number_origin} - {chapter.title_ru || 'Без названия'}
         </h1>
@@ -152,29 +195,8 @@ export default function ChapterPage({
           href={`/ranobe/${params.id}`}
           className="text-blue-400 hover:text-blue-300 inline-block"
         >
-          Back to Chapters
+          Назад к главам
         </Link>
-        {isMenuOpen && (
-          <div className="absolute top-12 right-0 bg-gray-800 p-4 rounded-lg shadow-lg">
-            <button
-              onClick={handleCreateBookmark}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2"
-            >
-              Create Bookmark
-            </button>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full"
-            >
-              Close Menu
-            </button>
-          </div>
-        )}
-        {bookmarkStatus && (
-          <div className="mt-4 p-2 bg-blue-500 text-white rounded">
-            {bookmarkStatus}
-          </div>
-        )}
       </header>
       <article className="max-w-prose mx-auto">
         <div className="mt-4 leading-relaxed text-gray-200 text-lg">
@@ -186,15 +208,37 @@ export default function ChapterPage({
           href={`/ranobe/${params.id}/chapter/${chapter.chapter_id - 1}`}
           className="text-blue-400 hover:text-blue-300"
         >
-          Previous Chapter
+          Предыдущая глава
         </Link>
         <Link
           href={`/ranobe/${params.id}/chapter/${chapter.chapter_id + 1}`}
           className="text-blue-400 hover:text-blue-300"
         >
-          Next Chapter
+          Следующая глава
         </Link>
       </footer>
+
+      {/* Floating Bookmark Button */}
+      <button
+        onClick={handleCreateBookmark}
+        aria-label="Создать закладку"
+        className={`fixed bottom-4 right-4 bg-blue-500 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+          isBookmarkVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <BookmarkIcon />
+      </button>
+
+      {/* Bookmark Status Toast */}
+      {bookmarkStatus && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-20 right-4 bg-gray-800 text-white p-3 rounded shadow-lg transition-opacity duration-300"
+        >
+          {bookmarkStatus}
+        </div>
+      )}
     </div>
   );
 }

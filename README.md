@@ -43,3 +43,5 @@ source venv/bin/activate
 ```
 
 python app.py
+
+pip freeze > requirements.txt
