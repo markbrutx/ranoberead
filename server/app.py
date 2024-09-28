@@ -1,11 +1,17 @@
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.debug("Starting Flask application")
+
 from flask import Flask, request
 from flask_restx import Api, Resource, fields
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
 from sqlalchemy import func
-
+logger.debug("Initializing Flask app")
 app = Flask(__name__)
+logger.debug("Flask app initialized")
 CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": ["Content-Type"]}}, support_credentials=True)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ranobe.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -339,4 +345,7 @@ def options():
     return '', 204
 
 if __name__ == '__main__':
+    logger.debug("Running app in debug mode")
     app.run(host='0.0.0.0', port=3000, debug=True)
+else:
+    logger.debug("App imported, not running directly")
