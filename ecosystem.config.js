@@ -4,7 +4,7 @@ module.exports = {
       name: 'flask-backend',
       cwd: './server',
       script: '/bin/bash',
-      args: '-c "source venv/bin/activate && venv/bin/gunicorn app:app -c gunicorn.conf.py"',
+      args: '-c "source venv/bin/activate && python3.8 -m gunicorn.conf.py"',
       interpreter: '',
       env: {
         PORT: 3000
