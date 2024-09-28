@@ -9,8 +9,8 @@ module.exports = {
       env: {
         PORT: 3000,
         PYTHONUNBUFFERED: 'true',
-        FLASK_ENV: 'development',
-        FLASK_DEBUG: '1'
+        FLASK_ENV: 'production', // продакшн-режим
+        FLASK_DEBUG: '0' // отключаем отладку
       },
       error_file: '/root/ranoberead/logs/pm2-flask-backend-error.log',
       out_file: '/root/ranoberead/logs/pm2-flask-backend-out.log',
