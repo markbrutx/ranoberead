@@ -3,12 +3,14 @@ module.exports = {
     {
       name: 'flask-backend',
       cwd: './server',
-      script: 'python3.8',
-      args: '-m gunicorn app:app --config gunicorn.conf.py',
-      interpreter: '',
+      script: 'gunicorn',
+      args: 'app:app -c gunicorn.conf.py',
+      interpreter: '/usr/bin/python3.8',
       env: {
         PORT: 3000,
-        PYTHONUNBUFFERED: 'true'
+        PYTHONUNBUFFERED: 'true',
+        FLASK_ENV: 'development',
+        FLASK_DEBUG: '1'
       }
     },
     {
