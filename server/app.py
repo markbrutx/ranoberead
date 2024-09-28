@@ -350,3 +350,4 @@ if __name__ == '__main__':
 else:
     logger.debug("App imported, not running directly")
     application = app
+    app.run(host='0.0.0.0', port=3000, debug=True)
