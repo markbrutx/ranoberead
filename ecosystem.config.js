@@ -4,7 +4,7 @@ module.exports = {
       name: 'flask-backend',
       cwd: '/root/ranoberead/server',
       script: '/usr/local/bin/gunicorn',
-      args: 'app:app --config gunicorn.conf.py --log-level debug --preload',
+      args: 'app:app --config /root/ranoberead/server/gunicorn.conf.py --preload',
       interpreter: '/usr/bin/python3.8',
       env: {
         PORT: 3000,
@@ -12,9 +12,10 @@ module.exports = {
         FLASK_ENV: 'development',
         FLASK_DEBUG: '1'
       },
-      error_file: '/root/ranoberead/logs/flask-backend-error.log',
-      out_file: '/root/ranoberead/logs/flask-backend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+      error_file: '/root/ranoberead/logs/pm2-flask-backend-error.log',
+      out_file: '/root/ranoberead/logs/pm2-flask-backend-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      combine_logs: true
     },
     {
       name: 'nextjs-frontend',
