@@ -120,9 +120,10 @@ export default function ChapterPage({
     try {
       await createBookmark(params.id, params.chapterNumber);
       setBookmarkStatus('Закладка создана успешно!');
-      setTimeout(() => setBookmarkStatus(null), 3000);
-    } catch (err) {
+    } catch (error) {
+      console.error('Ошибка при создании закладки:', error);
       setBookmarkStatus('Не удалось создать закладку. Попробуйте еще раз.');
+    } finally {
       setTimeout(() => setBookmarkStatus(null), 3000);
     }
   };
