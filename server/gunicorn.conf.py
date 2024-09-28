@@ -1,4 +1,4 @@
-bind = "127.0.0.1:3000"
+bind = "0.0.0.0:3000"  # Изменено с "127.0.0.1:3000"
 workers = 2
 threads = 2
 worker_class = "gthread"
