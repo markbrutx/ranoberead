@@ -5,7 +5,6 @@ worker_class = "gthread"
 max_requests = 1000
 max_requests_jitter = 50
 
-# Добавим следующие строки для улучшения логирования
 loglevel = "debug"
 accesslog = "/root/ranoberead/logs/gunicorn-access.log"
 errorlog = "/root/ranoberead/logs/gunicorn-error.log"

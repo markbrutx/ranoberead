@@ -5,7 +5,7 @@ module.exports = {
       cwd: '/root/ranoberead/server',
       script: '/usr/local/bin/gunicorn',
       args: 'app:application --config /root/ranoberead/server/gunicorn.conf.py --preload',
-      interpreter: '/usr/bin/python3.8',
+      interpreter: '/usr/bin/python3',
       env: {
         PORT: 3000,
         PYTHONUNBUFFERED: 'true',
