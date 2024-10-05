@@ -9,8 +9,8 @@ module.exports = {
       env: {
         PORT: 3000,
         PYTHONUNBUFFERED: 'true',
-        FLASK_ENV: 'production', // продакшн-режим
-        FLASK_DEBUG: '0' // отключаем отладку
+        FLASK_ENV: 'production',
+        FLASK_DEBUG: '0'
       },
       error_file: '/root/ranoberead/logs/pm2-flask-backend-error.log',
       out_file: '/root/ranoberead/logs/pm2-flask-backend-out.log',
@@ -21,9 +21,10 @@ module.exports = {
       name: 'nextjs-frontend',
       cwd: '/root/ranoberead/frontend',
       script: 'npm',
-      args: 'start',
+      args: 'run start',
       env: {
-        PORT: 5000
+        PORT: 5000,
+        NODE_ENV: 'production'
       }
     }
   ]
