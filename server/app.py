@@ -346,7 +346,10 @@ def options():
 
 if __name__ == '__main__':
     logger.debug("Running app in debug mode")
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    #app.run(host='0.0.0.0', port=3000, debug=True)
+    # run locally
+    app.run(debug=True, port=3000)
+
 else:
     logger.debug("App imported, not running directly")
     application = app

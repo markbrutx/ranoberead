@@ -5,12 +5,12 @@ import re
 
 # Parser settings
 BASE_URL = "https://wtr-lab.com/en/serie-619/losing-money-to-be-a-tycoon/chapter-{}"
-START_CHAPTER = 570
-NUM_CHAPTERS = 31
+START_CHAPTER = 747
+NUM_CHAPTERS = 103
 RANOBE_ID = 1  # ID of the existing ranobe in the database
 
 # URL of your API for creating a new chapter
-API_URL = "http://192.168.0.165:3000/chapters/"  # Updated to match your Flask API endpoint
+API_URL = "http://127.0.0.1:3000/chapters/"  # Updated to match your Flask API endpoint
 
 def fetch_chapter_content(chapter_number_origin):
     url = BASE_URL.format(chapter_number_origin)
