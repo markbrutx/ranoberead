@@ -9,8 +9,8 @@ load_dotenv()
 
 # Настройки
 RANOBE_ID = 1
-START_CHAPTER = 594
-NUM_CHAPTERS = 100
+START_CHAPTER = 691
+NUM_CHAPTERS = 206
 API_URL = "http://127.0.0.1:3000/chapters"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MAX_TOKENS = 4096

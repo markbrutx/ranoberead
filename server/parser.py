@@ -5,8 +5,8 @@ import re
 
 # Parser settings
 BASE_URL = "https://wtr-lab.com/en/serie-619/losing-money-to-be-a-tycoon/chapter-{}"
-START_CHAPTER = 747
-NUM_CHAPTERS = 103
+START_CHAPTER = 899
+NUM_CHAPTERS = 12
 RANOBE_ID = 1  # ID of the existing ranobe in the database
 
 # URL of your API for creating a new chapter
