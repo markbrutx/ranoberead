@@ -1,0 +1,44 @@
+{
+  "ranobe": [
+    {
+      "id": "670921dbdad01c7a159da9d6",
+      "title": "Losing Money to Be a Tycoon"
+    }
+  ],
+  "chapter": [
+    {
+      "id": 1,
+      "ranobe_id": "670921dbdad01c7a159da9d6",
+      "chapter_id": 334,
+      "chapter_number_origin": 337,
+      "title_ru": "Обязанности директора Лина",
+      "title_en": "Director Lin's Responsibilities",
+      "content_ru": "Тем временем, OTTO Technology. Чан Ю, Линь Вань и группа ключевых сотрудников компании собрались в к",
+      "content_en": "Meanwhile, OTTO Technology.\nChang You, Lin Wan and a group of key members of the company gathered in"
+    },
+    {
+      "id": 2,
+      "ranobe_id": "670921dbdad01c7a159da9d6",
+      "chapter_id": 335,
+      "chapter_number_origin": 338,
+      "title_ru": "Кассовый яд!",
+      "title_en": "Box Office Poison!",
+      "content_ru": "\"Апчхи!\" Выходя из студии Фейхуана, Пэй Цянь чихнул. \"Почему у меня какое-то смутное предчувствие...",
+      "content_en": "\"Ah Choo!\"\nOn the way out of Feihuang's studio, Pei Qian sneezed.\n\"Why is there a vague sense of for"
+    }
+  ],
+  "alembic_version": [
+    {
+      "version_num": "21fb88482e93"
+    }
+  ],
+  "bookmark": [
+    {
+      "id": 1,
+      "ranobe_id": "670921dbdad01c7a159da9d6",
+      "chapter_id": 414,
+      "created_at": "2024-09-24 10:56:38",
+      "updated_at": "2024-09-26 05:50:33"
+    }
+  ]
+}

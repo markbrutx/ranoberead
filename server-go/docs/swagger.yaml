@@ -1,0 +1,326 @@
+basePath: /api
+definitions:
+  models.Bookmark:
+    properties:
+      chapterID:
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: string
+      ranobeID:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  models.BookmarkCreateRequest:
+    properties:
+      chapter_id:
+        type: integer
+      ranobe_id:
+        type: string
+    required:
+    - chapter_id
+    - ranobe_id
+    type: object
+  models.Chapter:
+    properties:
+      chapter_id:
+        type: integer
+      chapter_number_origin:
+        type: integer
+      content_en:
+        type: string
+      content_ru:
+        type: string
+      id:
+        type: string
+      ranobe_id:
+        type: string
+      title_en:
+        type: string
+      title_ru:
+        type: string
+    type: object
+  models.CreateRanobeRequest:
+    properties:
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  models.Ranobe:
+    properties:
+      Chapters:
+        items:
+          $ref: '#/definitions/models.Chapter'
+        type: array
+      ID:
+        type: string
+      Title:
+        type: string
+    type: object
+  models.TranslationUpdate:
+    properties:
+      content_ru:
+        type: string
+      title_ru:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Это API для работы с ранобэ, главами и закладками
+  title: Ranobe Reader API
+  version: "1.0"
+paths:
+  /bookmarks:
+    get:
+      description: Returns all bookmarks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Bookmark'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get list of bookmarks
+      tags:
+      - bookmarks
+    post:
+      consumes:
+      - application/json
+      description: Creates a new bookmark or updates an existing one
+      parameters:
+      - description: Bookmark data
+        in: body
+        name: bookmark
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookmarkCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Bookmark'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create or update a bookmark
+      tags:
+      - bookmarks
+  /chapters:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new chapter or updates the existing one if it already
+        exists
+      parameters:
+      - description: Chapter to create or update
+        in: body
+        name: chapter
+        required: true
+        schema:
+          $ref: '#/definitions/models.Chapter'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Chapter'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create or update a chapter
+      tags:
+      - chapters
+  /chapters/{ranobe_id}:
+    get:
+      description: Returns all chapters for a specific ranobe
+      parameters:
+      - description: Ranobe ID
+        in: path
+        name: ranobe_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Chapter'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get list of chapters for a specific ranobe
+      tags:
+      - chapters
+  /chapters/{ranobe_id}/{chapter_id}:
+    get:
+      description: Fetch a chapter by ranobe_id and chapter_id
+      parameters:
+      - description: Ranobe ID
+        in: path
+        name: ranobe_id
+        required: true
+        type: string
+      - description: Chapter ID
+        in: path
+        name: chapter_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Chapter'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get a chapter
+      tags:
+      - chapters
+  /chapters/{ranobe_id}/{chapter_id}/update_translation:
+    put:
+      consumes:
+      - application/json
+      description: Update the Russian translation of a chapter
+      parameters:
+      - description: Ranobe ID
+        in: path
+        name: ranobe_id
+        required: true
+        type: string
+      - description: Chapter ID
+        in: path
+        name: chapter_id
+        required: true
+        type: string
+      - description: Translation data
+        in: body
+        name: translation
+        required: true
+        schema:
+          $ref: '#/definitions/models.TranslationUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Chapter'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Update chapter translation
+      tags:
+      - chapters
+  /ranobe:
+    get:
+      description: Returns all ranobe with their titles, IDs, and associated chapters
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Ranobe'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get ranobe list
+      tags:
+      - ranobe
+  /ranobe/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new ranobe with the given title
+      parameters:
+      - description: Ranobe title to create
+        in: body
+        name: ranobe
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateRanobeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Ranobe'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create a new ranobe
+      tags:
+      - ranobe
+  /ranobe/delete:
+    delete:
+      description: Deletes the ranobe with the given ID
+      parameters:
+      - description: Ranobe ID
+        in: query
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Delete a ranobe
+      tags:
+      - ranobe
+swagger: "2.0"
